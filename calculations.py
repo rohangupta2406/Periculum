@@ -145,22 +145,23 @@ def validate_project_input(project: ProjectInput) -> ValidationResult:
     if s.delayed_tasks < 0:
         errors.append("Delayed tasks cannot be negative.")
 
+    if s.completed_tasks > s.total_tasks:
+        errors.append(
+            f"Completed tasks ({s.completed_tasks}) cannot exceed total tasks ({s.total_tasks})."
+        )
+    if s.delayed_tasks > s.total_tasks:
+        errors.append(
+            f"Delayed tasks ({s.delayed_tasks}) cannot exceed total tasks ({s.total_tasks})."
+        )
     if s.total_tasks > 0:
-        if s.completed_tasks > s.total_tasks:
-            errors.append(
-                f"Completed tasks ({s.completed_tasks}) cannot exceed total tasks ({s.total_tasks})."
-            )
-        if s.delayed_tasks > s.total_tasks:
-            errors.append(
-                f"Delayed tasks ({s.delayed_tasks}) cannot exceed total tasks ({s.total_tasks})."
-            )
         if s.completed_tasks + s.delayed_tasks > s.total_tasks:
             warnings.append(
                 f"Completed tasks ({s.completed_tasks}) + delayed tasks ({s.delayed_tasks}) "
                 f"exceeds total tasks ({s.total_tasks}); assuming some completed tasks were previously delayed."
             )
-    else:
-        warnings.append("Total tasks is 0; task progress and delayed ratios will default to 0%.")
+    elif s.total_tasks == 0:
+        if s.completed_tasks == 0 and s.delayed_tasks == 0:
+            warnings.append("Total tasks is 0; task progress and delayed ratios will default to 0%.")
 
     if s.total_duration_days > 0 and s.days_elapsed > s.total_duration_days:
         warnings.append(
@@ -209,18 +210,19 @@ def validate_project_input(project: ProjectInput) -> ValidationResult:
     if rq.major_changes < 0:
         errors.append("Major changes cannot be negative.")
 
+    if rq.changed_requirements > rq.total_requirements:
+        errors.append(
+            f"Changed requirements ({rq.changed_requirements}) cannot exceed total requirements ({rq.total_requirements})."
+        )
     if rq.total_requirements > 0:
-        if rq.changed_requirements > rq.total_requirements:
-            errors.append(
-                f"Changed requirements ({rq.changed_requirements}) cannot exceed total requirements ({rq.total_requirements})."
-            )
         if rq.current_period_changes > rq.total_requirements:
             warnings.append(
                 f"Current period changes ({rq.current_period_changes}) exceeds total requirements ({rq.total_requirements}), "
                 f"indicating multiple revisions per requirement."
             )
-    else:
-        warnings.append("Total requirements is 0; change rates will default to 0%.")
+    elif rq.total_requirements == 0:
+        if rq.changed_requirements == 0:
+            warnings.append("Total requirements is 0; change rates will default to 0%.")
 
     if rq.changed_requirements > 0:
         if rq.major_changes > rq.changed_requirements:

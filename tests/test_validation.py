@@ -106,7 +106,7 @@ def test_delayed_tasks_exceeding_total_tasks():
 
 
 def test_zero_total_tasks_is_handled_safely():
-    """Zero total tasks should be valid with an informative warning, not crash."""
+    """Zero total tasks with zero completed/delayed should be valid with a warning."""
     project = get_base_project()
     project.schedule.total_tasks = 0
     project.schedule.completed_tasks = 0
@@ -114,6 +114,28 @@ def test_zero_total_tasks_is_handled_safely():
     res = validate_project_input(project)
     assert res.is_valid is True
     assert any("Total tasks is 0" in w for w in res.warnings)
+
+
+def test_completed_tasks_exceeding_zero_total_tasks():
+    """Completed tasks > 0 when total_tasks == 0 must fail validation."""
+    project = get_base_project()
+    project.schedule.total_tasks = 0
+    project.schedule.completed_tasks = 3
+    project.schedule.delayed_tasks = 0
+    res = validate_project_input(project)
+    assert res.is_valid is False
+    assert any("Completed tasks (3) cannot exceed total tasks (0)" in e for e in res.errors)
+
+
+def test_delayed_tasks_exceeding_zero_total_tasks():
+    """Delayed tasks > 0 when total_tasks == 0 must fail validation."""
+    project = get_base_project()
+    project.schedule.total_tasks = 0
+    project.schedule.completed_tasks = 0
+    project.schedule.delayed_tasks = 2
+    res = validate_project_input(project)
+    assert res.is_valid is False
+    assert any("Delayed tasks (2) cannot exceed total tasks (0)" in e for e in res.errors)
 
 
 def test_overdue_project_produces_warning():
@@ -162,6 +184,28 @@ def test_requirements_changed_exceeding_total():
     res = validate_project_input(project)
     assert res.is_valid is False
     assert any("Changed requirements (15) cannot exceed total requirements (10)" in e for e in res.errors)
+
+
+def test_changed_requirements_exceeding_zero_total_requirements():
+    """Changed requirements > 0 when total_requirements == 0 must fail validation."""
+    project = get_base_project()
+    project.requirement.total_requirements = 0
+    project.requirement.changed_requirements = 2
+    res = validate_project_input(project)
+    assert res.is_valid is False
+    assert any("Changed requirements (2) cannot exceed total requirements (0)" in e for e in res.errors)
+
+
+def test_zero_total_requirements_with_zero_changed_is_valid():
+    """Zero total requirements with zero changed requirements is valid with a warning."""
+    project = get_base_project()
+    project.requirement.total_requirements = 0
+    project.requirement.changed_requirements = 0
+    project.requirement.current_period_changes = 0
+    project.requirement.major_changes = 0
+    res = validate_project_input(project)
+    assert res.is_valid is True
+    assert any("Total requirements is 0" in w for w in res.warnings)
 
 
 def test_requirements_major_exceeding_changed():

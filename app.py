@@ -343,57 +343,109 @@ with st.expander("📝 Project Metrics Input Form", expanded=True):
 
 
 # ---------------------------------------------------------------------------
-# Construct Data Models & Run Assessment
+# Construct Data Models & Run Assessment (Gated on Submission)
 # ---------------------------------------------------------------------------
-project_input = ProjectInput(
-    project_name=project_name,
-    schedule=ScheduleMetrics(
-        total_duration_days=total_duration,
-        days_elapsed=days_elapsed,
-        total_tasks=total_tasks,
-        completed_tasks=completed_tasks,
-        delayed_tasks=delayed_tasks
-    ),
-    resource=ResourceMetrics(
-        required_team_members=req_members,
-        available_team_members=avail_members,
-        team_workload_pct=team_workload,
-        highest_individual_workload_pct=highest_workload
-    ),
-    quality=QualityMetrics(
-        open_bugs=open_bugs,
-        critical_bugs=critical_bugs,
-        previous_period_bugs=prev_bugs,
-        current_period_bugs=curr_bugs
-    ),
-    requirement=RequirementMetrics(
-        total_requirements=total_reqs,
-        changed_requirements=changed_reqs,
-        current_period_changes=curr_changes,
-        major_changes=major_changes
-    ),
-    enable_budget=enable_budget_toggle,
-    budget=budget_obj
+current_inputs_signature = (
+    project_name,
+    total_duration,
+    days_elapsed,
+    total_tasks,
+    completed_tasks,
+    delayed_tasks,
+    req_members,
+    avail_members,
+    team_workload,
+    highest_workload,
+    open_bugs,
+    critical_bugs,
+    prev_bugs,
+    curr_bugs,
+    total_reqs,
+    changed_reqs,
+    curr_changes,
+    major_changes,
+    enable_budget_toggle,
+    (tot_b, spent_b, comp_b) if enable_budget_toggle and budget_obj else None
 )
 
-# Validation Check
-val_result = validate_project_input(project_input)
+# Invalidate stored assessment if any input metric has changed
+if "assessment_data" in st.session_state and st.session_state["assessment_data"]:
+    if st.session_state["assessment_data"].get("signature") != current_inputs_signature:
+        st.session_state["assessment_data"] = None
 
-if not val_result.is_valid:
-    st.error("❌ **Validation Failed:** Please resolve the following input errors:")
-    for err in val_result.errors:
-        st.markdown(f"- ⚠️ {err}")
+# Require submission before calculating or displaying assessment
+if not submitted and st.session_state.get("assessment_data") is None:
+    st.info("👆 Review or adjust project metrics above and click **Calculate Risk Assessment** to run the evaluation.")
     st.stop()
 
-if val_result.warnings:
-    with st.expander("⚠️ Input Warnings & Non-Fatal Notices", expanded=False):
-        for warn in val_result.warnings:
-            st.warning(warn)
+if submitted:
+    project_input = ProjectInput(
+        project_name=project_name,
+        schedule=ScheduleMetrics(
+            total_duration_days=total_duration,
+            days_elapsed=days_elapsed,
+            total_tasks=total_tasks,
+            completed_tasks=completed_tasks,
+            delayed_tasks=delayed_tasks
+        ),
+        resource=ResourceMetrics(
+            required_team_members=req_members,
+            available_team_members=avail_members,
+            team_workload_pct=team_workload,
+            highest_individual_workload_pct=highest_workload
+        ),
+        quality=QualityMetrics(
+            open_bugs=open_bugs,
+            critical_bugs=critical_bugs,
+            previous_period_bugs=prev_bugs,
+            current_period_bugs=curr_bugs
+        ),
+        requirement=RequirementMetrics(
+            total_requirements=total_reqs,
+            changed_requirements=changed_reqs,
+            current_period_changes=curr_changes,
+            major_changes=major_changes
+        ),
+        enable_budget=enable_budget_toggle,
+        budget=budget_obj
+    )
 
-# Run Backend Scoring
-indicators = calculate_all_indicators(project_input)
-overall_result: OverallRiskResult = calculate_overall_risk(project_input, indicators)
-assessment: ProjectAssessment = generate_assessment(overall_result, project_input)
+    # Validation Check
+    val_result = validate_project_input(project_input)
+
+    if not val_result.is_valid:
+        st.session_state["assessment_data"] = None
+        st.error("❌ **Validation Failed:** Please resolve the following input errors:")
+        for err in val_result.errors:
+            st.markdown(f"- ⚠️ {err}")
+        st.stop()
+
+    # Run Backend Scoring
+    indicators = calculate_all_indicators(project_input)
+    overall_result: OverallRiskResult = calculate_overall_risk(project_input, indicators)
+    assessment: ProjectAssessment = generate_assessment(overall_result, project_input)
+    warnings = val_result.warnings
+
+    st.session_state["assessment_data"] = {
+        "signature": current_inputs_signature,
+        "overall_result": overall_result,
+        "assessment": assessment,
+        "indicators": indicators,
+        "project_input": project_input,
+        "warnings": warnings
+    }
+else:
+    cached = st.session_state["assessment_data"]
+    overall_result = cached["overall_result"]
+    assessment = cached["assessment"]
+    indicators = cached["indicators"]
+    project_input = cached["project_input"]
+    warnings = cached["warnings"]
+
+if warnings:
+    with st.expander("⚠️ Input Warnings & Non-Fatal Notices", expanded=False):
+        for warn in warnings:
+            st.warning(warn)
 
 
 # ---------------------------------------------------------------------------
