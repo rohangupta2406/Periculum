@@ -1,0 +1,34 @@
+{
+  "project_name": "MediCare Diagnostic Platform (Quality Crisis)",
+  "schedule": {
+    "total_duration_days": 150,
+    "days_elapsed": 80,
+    "total_tasks": 90,
+    "completed_tasks": 45,
+    "delayed_tasks": 5
+  },
+  "resource": {
+    "required_team_members": 6,
+    "available_team_members": 6,
+    "team_workload_pct": 100.0,
+    "highest_individual_workload_pct": 115.0
+  },
+  "quality": {
+    "open_bugs": 28,
+    "critical_bugs": 9,
+    "previous_period_bugs": 8,
+    "current_period_bugs": 20
+  },
+  "requirement": {
+    "total_requirements": 40,
+    "changed_requirements": 5,
+    "current_period_changes": 2,
+    "major_changes": 0
+  },
+  "enable_budget": false,
+  "budget": {
+    "total_budget": 300000.0,
+    "amount_spent": 160000.0,
+    "work_completed_pct": 50.0
+  }
+}

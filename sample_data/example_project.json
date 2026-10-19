@@ -1,0 +1,34 @@
+{
+  "project_name": "Phoenix ERP Migration (Healthy Baseline)",
+  "schedule": {
+    "total_duration_days": 180,
+    "days_elapsed": 90,
+    "total_tasks": 120,
+    "completed_tasks": 65,
+    "delayed_tasks": 3
+  },
+  "resource": {
+    "required_team_members": 8,
+    "available_team_members": 8,
+    "team_workload_pct": 95.0,
+    "highest_individual_workload_pct": 110.0
+  },
+  "quality": {
+    "open_bugs": 5,
+    "critical_bugs": 0,
+    "previous_period_bugs": 6,
+    "current_period_bugs": 5
+  },
+  "requirement": {
+    "total_requirements": 50,
+    "changed_requirements": 4,
+    "current_period_changes": 1,
+    "major_changes": 0
+  },
+  "enable_budget": false,
+  "budget": {
+    "total_budget": 250000.0,
+    "amount_spent": 120000.0,
+    "work_completed_pct": 54.0
+  }
+}
